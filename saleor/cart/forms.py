@@ -39,9 +39,9 @@ class AddToCartForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(AddToCartForm, self).clean()
-        quantity = cleaned_data.get('quantity')
-        if quantity is None:
+        if self._errors:
             return cleaned_data
+        quantity = cleaned_data['quantity']
         try:
             product_variant = self.get_variant(cleaned_data)
         except ObjectDoesNotExist:
