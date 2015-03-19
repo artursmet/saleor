@@ -27,6 +27,6 @@ build:
           python setup.py install
 
    - script:
-        name: Run tests
+        name: Run test
         code: |
           DJANGO_SETTINGS_MODULE=saleor.test_settings python setup.py test
