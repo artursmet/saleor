@@ -5,6 +5,7 @@ from .forms import DashboardSearchForm
 from ...search.views import paginate_results
 from ...product.models import Product
 from ...order.models import Order
+from ...userprofile.models import User
 
 
 @staff_member_required
@@ -13,7 +14,8 @@ def search(request):
     query = ''
     queryset_map = {
         Product: Product.objects.prefetch_related('images'),
-        Order: Order.objects.prefetch_related('user')}
+        Order: Order.objects.prefetch_related('user'),
+        User: User.objects.all()}
     if form.is_valid():
         results = form.search(queryset_map=queryset_map)
         page = paginate_results(results, request.GET, 25)

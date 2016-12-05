@@ -20,17 +20,16 @@
 {% endblock breadcrumb %}
 
 {% block content %}
-    {% if query %}
-        <div class="col-md-12">
-            <h3>{% blocktrans %}Search results for: {{ query }}{% endblocktrans %}</h3>
-        </div>
-        {% include "search/_items.html" %}
-        <div class="col-md-12">
-            {% bootstrap_pagination results url=query_string %}
-        </div>
-    {% else %}
-        <div class="col-md-12">
-            <h3>{% blocktrans %}No results found{% endblocktrans %}</h3>
-        </div>
-    {% endif %}
+    <div class="row">
+        {% if query and results %}
+            {% include "search/_items.html" %}
+            <div class="col-md-12">
+                {% bootstrap_pagination results url=query_string %}
+            </div>
+        {% else %}
+            <div class="col-md-12">
+                <h3>{% blocktrans %}No results found{% endblocktrans %}</h3>
+            </div>
+        {% endif %}
+    </div>
 {% endblock content %}
