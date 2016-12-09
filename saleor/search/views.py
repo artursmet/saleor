@@ -1,41 +1,34 @@
+from __future__ import unicode_literals
+
 from django.core.paginator import Paginator, InvalidPage
+from django.conf import settings
 from django.http import Http404
 from django.shortcuts import render
-
-from haystack.forms import SearchForm
-from ..product.models import ProductVariant, Product
-from ..order.models import Order
-from ..userprofile.models import User
+from .forms import SearchForm
+from ..product.utils import products_with_details
 
 
-def search_for_model(request, models):
-    form = SearchForm(data=request.GET or None, load_all=True)
-    paginate_by = 25
-    if form.is_valid():
-        results = form.search().models(*models)
-        paginator = Paginator(results, paginate_by)
-        page_number = request.GET.get('page', 1)
-        try:
-            page = paginator.page(page_number)
-        except InvalidPage:
-            raise Http404("No such page!")
-    else:
-        page = form.no_query_found()
-    return {'page': page, 'query': form.cleaned_data['q']}
+def paginate_results(results, get_data, paginate_by=25):
+    paginator = Paginator(results, paginate_by)
+    page_number = get_data.get('page', 1)
+    try:
+        page = paginator.page(page_number)
+    except InvalidPage:
+        raise Http404('No such page!')
+    return page
 
 
 def search(request):
-    search_data = search_for_model(request, models=[ProductVariant])
+    form = SearchForm(data=request.GET or None)
+    if form.is_valid():
+        visible_products = products_with_details(request.user)
+        results = form.search(model_or_queryset=visible_products)
+        page = paginate_results(results, request.GET, settings.PAGINATE_BY)
+    else:
+        page = form.no_query_found()
+    query = form.cleaned_data['q']
     ctx = {
-        'results': search_data['page'],
-        'query_string': '?q=%s' % search_data['query']}
+        'query': query,
+        'results': page,
+        'query_string': '?q=%s' % query}
     return render(request, 'search/results.html', ctx)
-
-
-def dashboard_search(request):
-    search_data = search_for_model(request, models=[Order, Product, User])
-    ctx = {
-        'query': search_data['query'],
-        'results': search_data['page'],
-        'query_string': '?q=%s' % search_data['query']}
-    return render(request, 'search/dashboard_results.html', ctx)
