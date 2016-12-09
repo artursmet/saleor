@@ -2,6 +2,10 @@ from __future__ import unicode_literals
 
 import ast
 import os.path
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 import dj_database_url
 import dj_email_url
@@ -89,6 +93,7 @@ context_processors = [
     'django.template.context_processors.request',
     'saleor.core.context_processors.default_currency',
     'saleor.core.context_processors.categories',
+    'saleor.core.context_processors.search_enabled',
 ]
 
 loaders = [
@@ -165,6 +170,7 @@ INSTALLED_APPS = [
     'materializecssform',
     'rest_framework',
     'webpack_loader',
+    # 'haystack',
     'allauth',
     'allauth.account',
     'allauth.socialaccount'
@@ -309,26 +315,31 @@ WEBPACK_LOADER = {
             r'.+\.hot-update\.js',
             r'.+\.map']}}
 
-ENABLE_ELASTICSEARCH = ast.literal_eval(os.environ.get('ENABLE_ELASTICSEARCH', 'False'))
-
-if ENABLE_ELASTICSEARCH:
-    HAYSTACK_CONNECTIONS = {
+ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+SEARCHBOX_URL = os.environ.get('SEARCHBOX_URL')
+BONSAI_URL = os.environ.get('BONSAI_URL')
+# We'll support couple of elasticsearch add-ons, but finally we'll use single
+# variable
+ES_URL = ELASTICSEARCH_URL or SEARCHBOX_URL or BONSAI_URL or ''
+if ES_URL:
+    SEARCH_BACKENDS = {
         'default': {
-            'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
-            'URL': os.environ.get('ELASTICSEARCH_URL',
-                                  'http://127.0.0.1:9200/'),
-            'INDEX_NAME': os.environ.get('ELASTICSEARCH_INDEX_NAME', 'saleor')
-        },
+            'BACKEND': 'saleor.search.backends.elasticsearch2',
+            'URLS': [ES_URL],
+            'INDEX': os.environ.get('ELASTICSEARCH_INDEX_NAME', 'storefront'),
+            'TIMEOUT': 5,
+            'AUTO_UPDATE': True},
+        'dashboard': {
+            'BACKEND': 'saleor.search.backends.dashboard',
+            'URLS': [ES_URL],
+            'INDEX': os.environ.get('ELASTICSEARCH_INDEX_NAME', 'storefront'),
+            'TIMEOUT': 5,
+            'AUTO_UPDATE': False}
     }
 else:
-    HAYSTACK_CONNECTIONS = {
-        'default': {
-            'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-            'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
-        },
-    }
+    SEARCH_BACKENDS = {}
 
-
+SEARCH_IS_ENABLED = bool(SEARCH_BACKENDS)
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
@@ -336,3 +347,4 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_USERNAME_REQUIRED = False
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
 ACCOUNT_LOGOUT_ON_GET = True
+

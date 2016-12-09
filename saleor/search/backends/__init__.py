@@ -17,16 +17,6 @@ class InvalidSearchBackendError(ImproperlyConfigured):
 
 def get_search_backend_config():
     search_backends = getattr(settings, 'SEARCH_BACKENDS', {})
-
-    # Make sure the default backend is always defined
-    search_backends.setdefault('default', {
-        # 'BACKEND': 'saleor.search.backends.db',
-        'BACKEND': 'saleor.search.backends.elasticsearch2',
-        'URLS': ['http://localhost:9200'],
-        'INDEX': 'test-wagtail3',
-        'TIMEOUT': 5,
-    })
-
     return search_backends
 
 
