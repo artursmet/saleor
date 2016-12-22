@@ -104,7 +104,7 @@ if not DEBUG:
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(PROJECT_ROOT, 'templates'), os.path.join(PROJECT_ROOT, 'templates')],
+    'DIRS': [os.path.join(PROJECT_ROOT, 'templates')],
     'OPTIONS': {
         'debug': DEBUG,
         'context_processors': context_processors,
@@ -153,7 +153,6 @@ INSTALLED_APPS = [
     'saleor.order',
     'saleor.dashboard',
     'saleor.shipping',
-    'saleor.search',
 
     # External apps
     'versatileimagefield',
