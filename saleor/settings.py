@@ -90,6 +90,7 @@ context_processors = [
     'saleor.core.context_processors.default_currency',
     'saleor.core.context_processors.categories',
     'saleor.cart.context_processors.cart_counter'
+    'saleor.core.context_processors.search_enabled',
 ]
 
 loaders = [
@@ -103,7 +104,7 @@ if not DEBUG:
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(PROJECT_ROOT, 'templates'), os.path.join(PROJECT_ROOT, 'templates')],
+    'DIRS': [os.path.join(PROJECT_ROOT, 'templates')],
     'OPTIONS': {
         'debug': DEBUG,
         'context_processors': context_processors,
@@ -152,6 +153,7 @@ INSTALLED_APPS = [
     'saleor.order',
     'saleor.dashboard',
     'saleor.shipping',
+    'saleor.search',
 
     # External apps
     'versatileimagefield',
@@ -318,3 +320,28 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_USERNAME_REQUIRED = False
 SOCIALACCOUNT_EMAIL_VERIFICATION = False
 ACCOUNT_LOGOUT_ON_GET = True
+
+
+ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+SEARCHBOX_URL = os.environ.get('SEARCHBOX_URL')
+BONSAI_URL = os.environ.get('BONSAI_URL')
+# We'll support couple of elasticsearch add-ons, but finally we'll use single
+# variable
+ES_URL = ELASTICSEARCH_URL or SEARCHBOX_URL or BONSAI_URL or ''
+if ES_URL:
+    SEARCH_BACKENDS = {
+        'default': {
+            'BACKEND': 'saleor.search.backends.elasticsearch2',
+            'URLS': [ES_URL],
+            'INDEX': os.environ.get('ELASTICSEARCH_INDEX_NAME', 'storefront'),
+            'TIMEOUT': 5,
+            'AUTO_UPDATE': True},
+        'dashboard': {
+            'BACKEND': 'saleor.search.backends.dashboard',
+            'URLS': [ES_URL],
+            'INDEX': os.environ.get('ELASTICSEARCH_INDEX_NAME', 'storefront'),
+            'TIMEOUT': 5,
+            'AUTO_UPDATE': False}
+    }
+else:
+    SEARCH_BACKENDS = {}
